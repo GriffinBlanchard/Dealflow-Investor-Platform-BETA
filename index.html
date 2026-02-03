@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Dealflow - Overcrest Realty</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
+html,body{background:#0a0a0a;min-height:100vh;color:#fff}
+.serif{font-family:'Playfair Display',serif}
+.accent{color:#c4e538}
+.inp{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:14px 16px;border-radius:12px;color:#fff;width:100%;font-size:15px;transition:all 0.2s}
+.inp:focus{outline:none;border-color:#c4e538;background:rgba(255,255,255,0.08)}
+.inp::placeholder{color:rgba(255,255,255,0.3)}
+.btn{background:#c4e538;color:#0a0a0a;font-weight:600;padding:16px 24px;border-radius:12px;border:none;cursor:pointer;width:100%;font-size:15px;transition:all 0.2s}
+.btn:hover{background:#d4f548;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn2{background:transparent;border:1px solid rgba(255,255,255,0.2);color:#fff;padding:14px 24px;border-radius:12px;cursor:pointer;font-weight:500;width:100%;font-size:15px;transition:all 0.2s}
+.btn2:hover{border-color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.05)}
+.card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;transition:all 0.2s}
+.card:hover{border-color:rgba(255,255,255,0.15);background:rgba(255,255,255,0.05)}
+.badge{padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;z-index:1000}
+.modal{background:#141414;border-radius:24px 24px 0 0;width:100%;max-height:92vh;overflow-y:auto;border-top:1px solid rgba(255,255,255,0.1)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;border:1px solid transparent}
+.chip.active{background:#c4e538;color:#0a0a0a}
+.chip:not(.active){background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.1)}
+.chip:not(.active):hover{background:rgba(255,255,255,0.1)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.fade{animation:fadeIn 0.4s ease}
+.slideUp{animation:slideUp 0.5s ease}
+.slideUp2{animation:slideUp 0.6s ease}
+.slideUp3{animation:slideUp 0.7s ease}
+.scaleIn{animation:scaleIn 0.4s ease}
+.float{animation:float 4s ease-in-out infinite}
+.pulse{animation:pulse 2s ease-in-out infinite}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect}=React;
+
+// Supabase Configuration
+const SUPABASE_URL='https://ijjayjxiarxdnyjrwhvy.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpamF5anhpYXJ4ZG55anJ3aHZ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4MTU1MDIsImV4cCI6MjA4NTM5MTUwMn0.FyJjU6iiNcMUkfKVXTB2AAv6SBOxqxZsRVZiC1XuteI';
+
+// Simple Supabase client
+const supabase={
+  auth:{
+    signUp:async(email,password,fullName)=>{
+      const r=await fetch(`${SUPABASE_URL}/auth/v1/signup`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY},
+        body:JSON.stringify({email,password,data:{full_name:fullName}})
+      });
+      return r.json();
+    },
+    signIn:async(email,password)=>{
+      const r=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY},
+        body:JSON.stringify({email,password})
+      });
+      return r.json();
+    },
+    getSession:()=>{
+      const s=localStorage.getItem('supabase_session');
+      return s?JSON.parse(s):null;
+    },
+    setSession:(s)=>localStorage.setItem('supabase_session',JSON.stringify(s)),
+    signOut:()=>localStorage.removeItem('supabase_session')
+  },
+  from:(table)=>({
+    select:async(cols='*')=>{
+      const s=supabase.auth.getSession();
+      const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=${cols}`,{
+        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${s?.access_token||SUPABASE_ANON_KEY}`}
+      });
+      return{data:await r.json(),error:null};
+    },
+    insert:async(data)=>{
+      const s=supabase.auth.getSession();
+      const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${s?.access_token||SUPABASE_ANON_KEY}`,'Prefer':'return=representation'},
+        body:JSON.stringify(data)
+      });
+      return{data:await r.json(),error:null};
+    },
+    delete:async()=>({eq:async(col,val)=>{
+      const s=supabase.auth.getSession();
+      await fetch(`${SUPABASE_URL}/rest/v1/${table}?${col}=eq.${val}`,{
+        method:'DELETE',
+        headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${s?.access_token||SUPABASE_ANON_KEY}`}
+      });
+      return{error:null};
+    }})
+  }),
+  functions:{
+    invoke:async(name,{body})=>{
+      const s=supabase.auth.getSession();
+      const r=await fetch(`${SUPABASE_URL}/functions/v1/${name}`,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'apikey':SUPABASE_ANON_KEY,
+          'Authorization':`Bearer ${s?.access_token||SUPABASE_ANON_KEY}`
+        },
+        body:JSON.stringify(body)
+      });
+      const data=await r.json();
+      if(!r.ok)return{data:null,error:data.error||data.message||'Function failed'};
+      return{data,error:null};
+    }
+  }
+};
+
+const I=({n,s=20,c='currentColor'})=>{
+const st={width:s,height:s,display:'block'};
+const i={
+arrow:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>,
+back:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>,
+check:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>,
+building:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01"/></svg>,
+home:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>,
+chart:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>,
+users:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+search:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+target:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+brain:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M12 5v13"/></svg>,
+flag:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
+grid:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>,
+plus:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>,
+x:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2"><path d="M18 6 6 18M6 6l12 12"/></svg>,
+pin:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+hammer:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="m15 12-8.5 8.5c-.83.83-2.17.83-3 0a2.12 2.12 0 0 1 0-3L12 9"/><path d="m17.64 15 4.95-4.95a2.12 2.12 0 0 0-3-3L14.64 12"/></svg>,
+tree:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="M12 22v-7"/><path d="M17 8a5 5 0 0 0-10 0c0 6 5 7 5 7s5-1 5-7Z"/></svg>,
+logout:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+sparkle:<svg style={st} viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.5"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></svg>
+};
+return i[n]||null;
+};
+
+const DATA=[
+{id:1,type:'commercial',name:'Downtown Office Tower',city:'San Diego',state:'CA',price:8500000,img:'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800',cap:7.2,noi:612000,coc:12.4,sqft:45000,feat:true,flag:false},
+{id:2,type:'multifamily',name:'Sunset Apartments',city:'Los Angeles',state:'CA',price:12500000,img:'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800',cap:5.8,noi:725000,coc:9.2,units:48,flag:false},
+{id:3,type:'flip',name:'Craftsman Fixer',city:'Austin',state:'TX',price:385000,img:'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800',arv:580000,profit:118000,roi:26.1,sqft:2200,feat:true,flag:false},
+{id:4,type:'land',name:'Development Site',city:'Denver',state:'CO',price:2200000,img:'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800',acres:15.5,proj:4500000,roi:66.7,flag:false},
+{id:5,type:'commercial',name:'Metro Plaza',city:'Phoenix',state:'AZ',price:7200000,img:'https://images.unsplash.com/photo-1555636222-cae831e670b3?w=800',cap:6.8,noi:489600,coc:10.8,sqft:32000,hot:true,reason:'15% below market',flag:false},
+{id:6,type:'multifamily',name:'Palm Gardens',city:'San Diego',state:'CA',price:4800000,img:'https://images.unsplash.com/photo-1460317442991-0ec209397118?w=800',cap:7.5,noi:336000,coc:14.2,units:24,hot:true,reason:'Motivated seller',flag:false}
+];
+
+const TYPES=[{id:'commercial',name:'Commercial',ic:'building'},{id:'multifamily',name:'Multifamily',ic:'home'},{id:'flip',name:'Flip',ic:'hammer'},{id:'land',name:'Land',ic:'tree'}];
+
+// No more boring slides - straight to action!
+
+const TOUR=[
+{ic:'grid',t:'Marketplace',s:'Browse exclusive deals',d:'Tap any card to see full details, metrics, and request more info. Look for the blue "Match" badge on deals that fit your criteria.',accent:'#c4e538'},
+{ic:'flag',t:'Save Deals',s:'Build your shortlist',d:'Tap the flag icon on any property to save it. Access all your saved deals from the Saved tab anytime.',accent:'#f59e0b'},
+{ic:'brain',t:'AI Analyzer',s:'Instant deal analysis',d:'Copy any listing from Zillow, LoopNet, or email. Paste it in and get instant metrics, analysis, and a buy/pass recommendation.',accent:'#8b5cf6'},
+{ic:'home',t:'Portfolio',s:'Track your investments',d:'Add your own properties to track performance. We auto-calculate NOI, cap rate, cash-on-cash, and ROI for every deal.',accent:'#3b82f6'},
+{ic:'target',t:'Buy Box',s:'Smart matching',d:'Edit your criteria anytime from the Buy Box button. We\'ll highlight matching deals automatically as new properties come in.',accent:'#10b981'}
+];
+
+const STS=['CA','TX','AZ','CO','FL','NY','WA','NV','GA','NC'];
+const fmt=n=>n>=1e6?'$'+(n/1e6).toFixed(1)+'M':n>=1e3?'$'+(n/1e3).toFixed(0)+'K':'$'+n;
+
+const calc=(p)=>{
+if(p.type==='commercial'||p.type==='multifamily'){
+const r=(p.rent||0)*12,noi=r-(p.exp||0),cap=p.price>0?(noi/p.price)*100:0;
+const dp=p.price*0.25,debt=(p.price-dp)*0.07,coc=dp>0?((noi-debt)/dp)*100:0;
+return{noi,cap:cap.toFixed(1),coc:coc.toFixed(1)};
+}
+if(p.type==='flip'){const t=(p.price||0)+(p.rehab||0)+(p.hold||0),pr=(p.arv||0)-t;return{tot:t,profit:pr,roi:t>0?(pr/t*100).toFixed(1):'0'};}
+if(p.type==='land'){const t=(p.price||0)+(p.dev||0),pr=(p.proj||0)-t;return{tot:t,profit:pr,roi:t>0?(pr/t*100).toFixed(1):'0'};}
+return{};
+};
+
+const match=(p,b)=>{
+if(!b?.on)return false;
+if(b.types?.length&&!b.types.includes(p.type))return false;
+if(b.min&&p.price<b.min)return false;
+if(b.max&&p.price>b.max)return false;
+if(b.sts?.length&&!b.sts.includes(p.state))return false;
+if(b.capMin&&p.cap<b.capMin)return false;
+return true;
+};
+
+function App(){
+const[scr,setScr]=useState('login');
+const[step,setStep]=useState('welcome');
+const[tourSlide,setTourSlide]=useState(0);
+const[port,setPort]=useState([]);
+const[pType,setPType]=useState(null);
+const[pData,setPData]=useState({});
+const[props,setProps]=useState(DATA);
+const[filt,setFilt]=useState('all');
+const[sel,setSel]=useState(null);
+const[saved,setSaved]=useState(false);
+const[conf,setConf]=useState(false);
+const[msg,setMsg]=useState('');
+const[box,setBox]=useState({on:false,types:[],min:'',max:'',sts:[],capMin:''});
+const[showBox,setShowBox]=useState(false);
+const[aiMode,setAiMode]=useState(false);
+const[aiWelcome,setAiWelcome]=useState(true);
+const[aiAddress,setAiAddress]=useState('');
+const[aiIn,setAiIn]=useState('');
+const[aiOut,setAiOut]=useState(null);
+const[aiLoad,setAiLoad]=useState(false);
+const[tips,setTips]=useState({ai:true,save:true});
+const[loginEmail,setLoginEmail]=useState('');
+const[loginPass,setLoginPass]=useState('');
+const[loginError,setLoginError]=useState('');
+const[loginLoading,setLoginLoading]=useState(false);
+const[signupName,setSignupName]=useState('');
+const[signupEmail,setSignupEmail]=useState('');
+const[signupPass,setSignupPass]=useState('');
+const[signupPass2,setSignupPass2]=useState('');
+const[signupError,setSignupError]=useState('');
+const[signupLoading,setSignupLoading]=useState(false);
+const[toast,setToast]=useState(null);
+
+const cnt=props.filter(p=>p.flag).length;
+const mCnt=props.filter(p=>match(p,box)).length;
+const toggle=id=>{
+const p=props.find(x=>x.id===id);
+if(p&&!p.flag&&tips.save){
+setToast('Saved! Find all your saved deals in the Saved tab below.');
+setTimeout(()=>setToast(null),3000);
+setTips({...tips,save:false});
+}
+setProps(ps=>ps.map(p=>p.id===id?{...p,flag:!p.flag}:p));
+};
+const fltd=props.filter(p=>filt==='all'?true:filt==='hot'?p.hot:filt==='match'?match(p,box):p.type===filt);
+
+const add=()=>{const m=calc({...pData,type:pType});setPort([...port,{...pData,...m,type:pType,id:Date.now()}]);setPData({});setPType(null);setStep('sum');};
+const req=p=>{setMsg(`Request sent for "${p.name}"`);setConf(true);setSel(null);};
+const togType=t=>setBox(b=>({...b,types:b.types.includes(t)?b.types.filter(x=>x!==t):[...b.types,t]}));
+const togSt=s=>setBox(b=>({...b,sts:b.sts.includes(s)?b.sts.filter(x=>x!==s):[...b.sts,s]}));
+
+const analyze=async()=>{
+setAiLoad(true);setAiOut(null);
+try{
+const{data,error}=await supabase.functions.invoke('rapid-action',{
+  body:{address:aiAddress,listing_text:aiIn}
+});
+console.log('Edge function response:',data,error);
+if(error){
+  setAiOut({error:typeof error==='string'?error:error.message||JSON.stringify(error)});
+}else if(data?.success){
+  setAiOut(data.data);
+}else if(data?.error){
+  setAiOut({error:data.error});
+}else{
+  setAiOut({error:'Unknown response from server'});
+}
+}catch(e){
+console.error('Analyze error:',e);
+setAiOut({error:e.message||'Network error'});
+}
+setAiLoad(false);
+};
+
+const addAi=()=>{
+if(!aiOut||aiOut.error)return;
+const p={...aiOut,id:Date.now(),name:aiOut.name};
+if(p.type==='commercial'||p.type==='multifamily'){
+p.rent=p.monthlyRent;p.exp=p.annualExpenses;
+const m=calc(p);p.noi=m.noi;p.cap=m.cap;p.coc=m.coc;
+}
+setPort([...port,p]);setAiOut(null);setAiIn('');setAiMode(false);
+setMsg('Property added!');setConf(true);
+};
+
+// Components
+const Back=({fn})=><button onClick={fn} style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:12,padding:12,cursor:'pointer',color:'#fff',display:'flex'}}><I n="back" s={20}/></button>;
+
+const Nav=({act})=><div style={{position:'fixed',bottom:0,left:0,right:0,background:'rgba(10,10,10,0.95)',backdropFilter:'blur(20px)',borderTop:'1px solid rgba(255,255,255,0.08)',padding:'10px 16px 28px',display:'flex',justifyContent:'space-around'}}>
+{[{k:'dash',i:'home',l:'Portfolio'},{k:'market',i:'grid',l:'Deals'},{k:'ai',i:'brain',l:'AI'},{k:'saved',i:'flag',l:'Saved'}].map(x=>
+<button key={x.k} onClick={()=>x.k==='saved'?setSaved(true):x.k==='ai'?setAiMode(true):setScr(x.k)} style={{background:'none',border:'none',color:act===x.k?'#c4e538':x.k==='ai'?'#8b5cf6':'rgba(255,255,255,0.4)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:4,fontSize:10,fontWeight:500,position:'relative'}}>
+<I n={x.i} s={22} c={act===x.k?'#c4e538':x.k==='ai'?'#8b5cf6':'rgba(255,255,255,0.4)'}/>{x.l}
+{x.k==='saved'&&cnt>0&&<span style={{position:'absolute',top:-2,right:8,background:'#c4e538',color:'#0a0a0a',fontSize:9,fontWeight:700,width:16,height:16,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>{cnt}</span>}
+{x.k==='market'&&mCnt>0&&box.on&&<span style={{position:'absolute',top:-2,right:4,background:'#3b82f6',color:'#fff',fontSize:9,fontWeight:700,width:16,height:16,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}>{mCnt}</span>}
+</button>)}
+</div>;
+
+const Modals=()=><>
+{toast&&<div className="slideUp" style={{position:'fixed',bottom:100,left:20,right:20,background:'#1a1a1a',border:'1px solid rgba(196,229,56,0.3)',borderRadius:12,padding:14,zIndex:1001,display:'flex',alignItems:'center',gap:12,boxShadow:'0 10px 40px rgba(0,0,0,0.5)'}}><div style={{width:32,height:32,background:'#c4e538',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><I n="check" s={18} c="#0a0a0a"/></div><p style={{fontSize:13,color:'rgba(255,255,255,0.8)',flex:1}}>{toast}</p><button onClick={()=>setToast(null)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',cursor:'pointer',padding:4}}><I n="x" s={16}/></button></div>}
+{sel&&<div className="modal-bg" onClick={()=>setSel(null)}><div className="modal scaleIn" onClick={e=>e.stopPropagation()}><div style={{width:36,height:4,background:'rgba(255,255,255,0.2)',borderRadius:2,margin:'10px auto'}}/><img src={sel.img} style={{width:'100%',height:200,objectFit:'cover'}}/><div style={{padding:'20px 20px 32px'}}><div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>{match(sel,box)&&<span className="badge" style={{background:'#3b82f6',color:'#fff'}}>Match</span>}{sel.hot&&<span className="badge" style={{background:'#ef4444',color:'#fff'}}>Hot Deal</span>}{sel.feat&&<span className="badge" style={{background:'rgba(196,229,56,0.2)',color:'#c4e538'}}>Featured</span>}</div><h2 style={{fontSize:22,fontWeight:600,marginBottom:4}}>{sel.name}</h2><p style={{color:'rgba(255,255,255,0.5)',fontSize:14,marginBottom:20,display:'flex',alignItems:'center',gap:6}}><I n="pin" s={14} c="rgba(255,255,255,0.5)"/>{sel.city}, {sel.state}</p><div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10,marginBottom:20}}><div className="card" style={{padding:14,textAlign:'center'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>PRICE</p><p style={{fontSize:20,fontWeight:600,color:'#c4e538'}}>{fmt(sel.price)}</p></div>{sel.cap&&<div className="card" style={{padding:14,textAlign:'center'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>CAP RATE</p><p style={{fontSize:20,fontWeight:600}}>{sel.cap}%</p></div>}{sel.noi&&<div className="card" style={{padding:14,textAlign:'center'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>NOI</p><p style={{fontSize:20,fontWeight:600}}>{fmt(sel.noi)}</p></div>}{sel.coc&&<div className="card" style={{padding:14,textAlign:'center'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>CASH-ON-CASH</p><p style={{fontSize:20,fontWeight:600}}>{sel.coc}%</p></div>}{sel.roi&&<div className="card" style={{padding:14,textAlign:'center'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>ROI</p><p style={{fontSize:20,fontWeight:600}}>{sel.roi}%</p></div>}{sel.profit&&<div className="card" style={{padding:14,textAlign:'center'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:4}}>PROFIT</p><p style={{fontSize:20,fontWeight:600,color:'#c4e538'}}>{fmt(sel.profit)}</p></div>}</div><div style={{display:'flex',gap:10}}><button onClick={()=>{toggle(sel.id);setSel({...sel,flag:!sel.flag})}} className="btn2" style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}><I n="flag" s={16}/>{sel.flag?'Saved':'Save'}</button><button onClick={()=>req(sel)} className="btn" style={{flex:1}}>Request Info</button></div></div></div></div>}
+{saved&&<div className="modal-bg" onClick={()=>setSaved(false)}><div className="modal scaleIn" onClick={e=>e.stopPropagation()} style={{maxHeight:'80vh'}}><div style={{width:36,height:4,background:'rgba(255,255,255,0.2)',borderRadius:2,margin:'10px auto'}}/><div style={{padding:'16px 20px 32px'}}><h3 style={{fontSize:18,fontWeight:600,marginBottom:20,textAlign:'center'}}>Saved ({cnt})</h3>{cnt===0?<p style={{color:'rgba(255,255,255,0.4)',textAlign:'center',padding:32}}>No saved properties yet</p>:<div style={{display:'flex',flexDirection:'column',gap:10}}>{props.filter(p=>p.flag).map(p=><div key={p.id} onClick={()=>{setSaved(false);setSel(p)}} className="card" style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer',padding:12}}><img src={p.img} style={{width:56,height:56,objectFit:'cover',borderRadius:10}}/><div style={{flex:1}}><p style={{fontWeight:600,fontSize:14}}>{p.name}</p><p style={{fontSize:14,color:'#c4e538',fontWeight:500}}>{fmt(p.price)}</p></div><button onClick={e=>{e.stopPropagation();toggle(p.id)}} style={{background:'none',border:'none',color:'rgba(255,255,255,0.3)',cursor:'pointer',padding:8}}><I n="x" s={18}/></button></div>)}</div>}</div></div></div>}
+{showBox&&<div className="modal-bg" onClick={()=>setShowBox(false)}><div className="modal scaleIn" onClick={e=>e.stopPropagation()} style={{maxHeight:'90vh'}}><div style={{width:36,height:4,background:'rgba(255,255,255,0.2)',borderRadius:2,margin:'10px auto'}}/><div style={{padding:'16px 20px 32px'}}><h3 style={{fontSize:18,fontWeight:600,marginBottom:4,textAlign:'center'}}>Buy Box</h3><p style={{fontSize:13,color:'rgba(255,255,255,0.4)',textAlign:'center',marginBottom:24}}>Set your investment criteria</p><div style={{marginBottom:20}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:10,color:'rgba(255,255,255,0.6)'}}>Property Types</label><div style={{display:'flex',flexWrap:'wrap',gap:8}}>{TYPES.map(t=><div key={t.id} onClick={()=>togType(t.id)} className={`chip ${box.types.includes(t.id)?'active':''}`}><I n={t.ic} s={14}/>{t.name}</div>)}</div></div><div style={{marginBottom:20}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:10,color:'rgba(255,255,255,0.6)'}}>Price Range</label><div style={{display:'flex',gap:10}}><input type="number" value={box.min} onChange={e=>setBox({...box,min:e.target.value})} placeholder="Min" className="inp" style={{flex:1}}/><input type="number" value={box.max} onChange={e=>setBox({...box,max:e.target.value})} placeholder="Max" className="inp" style={{flex:1}}/></div></div><div style={{marginBottom:20}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:10,color:'rgba(255,255,255,0.6)'}}>States</label><div style={{display:'flex',flexWrap:'wrap',gap:6}}>{STS.map(s=><div key={s} onClick={()=>togSt(s)} className={`chip ${box.sts.includes(s)?'active':''}`} style={{padding:'8px 12px'}}>{s}</div>)}</div></div><div style={{marginBottom:24}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:10,color:'rgba(255,255,255,0.6)'}}>Min Cap Rate</label><input type="number" value={box.capMin} onChange={e=>setBox({...box,capMin:e.target.value})} placeholder="e.g. 6" className="inp"/></div><button onClick={()=>{setBox({...box,on:true});setShowBox(false)}} className="btn" style={{marginBottom:10}}>Save</button>{box.on&&<button onClick={()=>setBox({on:false,types:[],min:'',max:'',sts:[],capMin:''})} className="btn2">Clear</button>}</div></div></div>}
+{aiMode&&<div className="modal-bg" onClick={()=>{setAiMode(false);setAiOut(null);setAiIn('');setAiAddress('')}}><div className="modal scaleIn" onClick={e=>e.stopPropagation()} style={{maxHeight:'95vh'}}><div style={{width:36,height:4,background:'rgba(255,255,255,0.2)',borderRadius:2,margin:'10px auto'}}/>
+
+{/* AI Welcome Screen */}
+{aiWelcome&&!aiOut&&<div style={{padding:'40px 24px 48px',textAlign:'center'}}>
+<div className="float" style={{width:80,height:80,background:'linear-gradient(135deg,#8b5cf6,#6366f1)',borderRadius:24,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px',boxShadow:'0 20px 60px rgba(139,92,246,0.3)'}}><I n="brain" s={40}/></div>
+<h2 className="serif" style={{fontSize:28,fontWeight:600,marginBottom:8}}>AI Deal Analyzer</h2>
+<p style={{color:'rgba(255,255,255,0.5)',fontSize:15,marginBottom:32}}>Real market data + AI insights</p>
+
+<div style={{display:'flex',flexDirection:'column',gap:16,marginBottom:32,textAlign:'left'}}>
+<div className="slideUp" style={{display:'flex',gap:14,alignItems:'flex-start',background:'rgba(139,92,246,0.08)',border:'1px solid rgba(139,92,246,0.15)',borderRadius:14,padding:16}}>
+<div style={{width:40,height:40,background:'rgba(139,92,246,0.2)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:'#8b5cf6',fontWeight:700,fontSize:16}}>1</div>
+<div><p style={{fontWeight:600,marginBottom:4}}>Enter address</p><p style={{fontSize:13,color:'rgba(255,255,255,0.5)'}}>We pull real rental data for that location</p></div>
+</div>
+<div className="slideUp2" style={{display:'flex',gap:14,alignItems:'flex-start',background:'rgba(59,130,246,0.08)',border:'1px solid rgba(59,130,246,0.15)',borderRadius:14,padding:16}}>
+<div style={{width:40,height:40,background:'rgba(59,130,246,0.2)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:'#3b82f6',fontWeight:700,fontSize:16}}>2</div>
+<div><p style={{fontWeight:600,marginBottom:4}}>Real market data</p><p style={{fontSize:13,color:'rgba(255,255,255,0.5)'}}>Rent estimates & comps from Rentcast</p></div>
+</div>
+<div className="slideUp3" style={{display:'flex',gap:14,alignItems:'flex-start',background:'rgba(16,185,129,0.08)',border:'1px solid rgba(16,185,129,0.15)',borderRadius:14,padding:16}}>
+<div style={{width:40,height:40,background:'rgba(16,185,129,0.2)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,color:'#10b981',fontWeight:700,fontSize:16}}>3</div>
+<div><p style={{fontWeight:600,marginBottom:4}}>AI analysis</p><p style={{fontSize:13,color:'rgba(255,255,255,0.5)'}}>Metrics, pros/cons, buy/pass recommendation</p></div>
+</div>
+</div>
+
+<button onClick={()=>setAiWelcome(false)} className="btn" style={{background:'linear-gradient(135deg,#8b5cf6,#6366f1)'}}>Analyze a property</button>
+</div>}
+
+{/* AI Analyzer Interface */}
+{!aiWelcome&&<div style={{padding:'16px 20px 32px'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}}><div style={{display:'flex',alignItems:'center',gap:12}}><div style={{width:44,height:44,background:'linear-gradient(135deg,#8b5cf6,#6366f1)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center'}}><I n="brain" s={22}/></div><div><h3 style={{fontSize:18,fontWeight:600}}>AI Analyzer</h3><p style={{fontSize:13,color:'rgba(255,255,255,0.4)'}}>Real data + AI insights</p></div></div>{!aiOut&&<button onClick={()=>setAiWelcome(true)} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',fontSize:12,cursor:'pointer'}}>How it works</button>}</div>
+{!aiOut&&<><div style={{marginBottom:16}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Property Address <span style={{color:'#3b82f6'}}>(for market data)</span></label><input type="text" value={aiAddress} onChange={e=>setAiAddress(e.target.value)} placeholder="123 Main St, San Diego, CA 92101" className="inp"/></div><div style={{marginBottom:16}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Listing Details <span style={{color:'rgba(255,255,255,0.3)'}}>(optional)</span></label><textarea value={aiIn} onChange={e=>setAiIn(e.target.value)} placeholder="Paste any extra details from listing..." className="inp" style={{minHeight:100,resize:'vertical',lineHeight:1.5}} disabled={aiLoad}/></div><div style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:12,padding:12,marginBottom:16}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginBottom:8}}>Data sources:</p><div style={{display:'flex',gap:6,flexWrap:'wrap'}}><span style={{background:'rgba(59,130,246,0.15)',color:'#3b82f6',padding:'3px 8px',borderRadius:6,fontSize:10,fontWeight:500}}>Rentcast API</span><span style={{background:'rgba(139,92,246,0.15)',color:'#8b5cf6',padding:'3px 8px',borderRadius:6,fontSize:10,fontWeight:500}}>Claude AI</span></div></div><button onClick={analyze} className="btn" style={{background:aiLoad?'rgba(139,92,246,0.5)':'linear-gradient(135deg,#8b5cf6,#6366f1)'}} disabled={(!aiIn.trim()&&!aiAddress.trim())||aiLoad}>{aiLoad?'Analyzing...':'Analyze Property'}</button></>}
+{aiOut&&!aiOut.error&&<div className="slideUp"><div className="card" style={{marginBottom:16,borderColor:'rgba(139,92,246,0.3)'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}><div><h4 style={{fontSize:16,fontWeight:600,marginBottom:4}}>{aiOut.property?.name||aiOut.name}</h4><p style={{fontSize:13,color:'rgba(255,255,255,0.4)'}}>{aiOut.property?.city||aiOut.city}, {aiOut.property?.state||aiOut.state}</p></div><span className="badge" style={{background:aiOut.recommendation==='BUY'?'#22c55e':aiOut.recommendation==='PASS'?'#ef4444':'#f59e0b',color:'#fff'}}>{aiOut.recommendation}</span></div><p style={{fontSize:24,fontWeight:600,color:'#c4e538',marginBottom:16}}>${((aiOut.property?.price||aiOut.price)||0).toLocaleString()}</p>{aiOut.market_data&&<div style={{background:'rgba(59,130,246,0.1)',borderRadius:8,padding:10,marginBottom:12}}><div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}><span style={{background:'#3b82f6',color:'#fff',padding:'2px 6px',borderRadius:4,fontSize:9,fontWeight:600}}>RENTCAST</span></div><div style={{display:'flex',justifyContent:'space-between'}}><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Est. Rent</p><p style={{fontSize:14,fontWeight:600,color:'#3b82f6'}}>${(aiOut.financials?.monthly_rent||0).toLocaleString()}/mo</p></div>{aiOut.market_data.confidence&&<div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Confidence</p><p style={{fontSize:12,fontWeight:500,color:aiOut.market_data.confidence==='high'?'#22c55e':'#f59e0b'}}>{aiOut.market_data.confidence}</p></div>}</div></div>}<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>{(aiOut.financials?.cap_rate||aiOut.capRate)&&<div style={{background:'rgba(255,255,255,0.05)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>CAP</p><p style={{fontSize:14,fontWeight:600}}>{(aiOut.financials?.cap_rate||aiOut.capRate).toFixed?.(1)||(aiOut.financials?.cap_rate||aiOut.capRate)}%</p></div>}{(aiOut.financials?.noi||aiOut.noi)&&<div style={{background:'rgba(255,255,255,0.05)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>NOI</p><p style={{fontSize:14,fontWeight:600}}>${((aiOut.financials?.noi||aiOut.noi)/1000).toFixed(0)}K</p></div>}{(aiOut.financials?.cash_on_cash||aiOut.coc)&&<div style={{background:'rgba(255,255,255,0.05)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>CoC</p><p style={{fontSize:14,fontWeight:600}}>{(aiOut.financials?.cash_on_cash||aiOut.coc).toFixed?.(1)||(aiOut.financials?.cash_on_cash||aiOut.coc)}%</p></div>}{(aiOut.property?.units||aiOut.units)&&<div style={{background:'rgba(255,255,255,0.05)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>UNITS</p><p style={{fontSize:14,fontWeight:600}}>{aiOut.property?.units||aiOut.units}</p></div>}</div></div><div style={{marginBottom:16}}><p style={{fontSize:13,fontWeight:600,color:'#c4e538',marginBottom:8}}>Analysis</p><p style={{fontSize:14,color:'rgba(255,255,255,0.7)',lineHeight:1.6}}>{aiOut.analysis}</p></div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}><div><p style={{fontSize:12,fontWeight:600,color:'#22c55e',marginBottom:8}}>Pros</p>{aiOut.pros?.map((p,i)=><p key={i} style={{fontSize:13,color:'rgba(255,255,255,0.6)',marginBottom:4}}>• {p}</p>)}</div><div><p style={{fontSize:12,fontWeight:600,color:'#ef4444',marginBottom:8}}>Cons</p>{aiOut.cons?.map((c,i)=><p key={i} style={{fontSize:13,color:'rgba(255,255,255,0.6)',marginBottom:4}}>• {c}</p>)}</div></div>{aiOut.disclaimers&&<div style={{background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.2)',borderRadius:8,padding:10,marginBottom:16}}><p style={{fontSize:10,fontWeight:600,color:'#f59e0b',marginBottom:4}}>⚠️ Note</p>{aiOut.disclaimers.map((d,i)=><p key={i} style={{fontSize:11,color:'rgba(255,255,255,0.5)'}}>• {d}</p>)}</div>}<div style={{display:'flex',gap:10}}><button onClick={()=>{setAiOut(null);setAiIn('');setAiAddress('')}} className="btn2" style={{flex:1}}>New Analysis</button><button onClick={addAi} className="btn" style={{flex:1,background:'linear-gradient(135deg,#8b5cf6,#6366f1)'}}>Add to Portfolio</button></div></div>}
+{aiOut?.error&&<div className="card" style={{borderColor:'rgba(239,68,68,0.3)',textAlign:'center'}}><p style={{color:'#ef4444',marginBottom:12}}>Error: {aiOut.error}</p><button onClick={()=>setAiOut(null)} className="btn2">Try Again</button></div>}
+</div>}
+</div></div>}
+{conf&&<div className="modal-bg" onClick={()=>setConf(false)}><div className="modal scaleIn" onClick={e=>e.stopPropagation()} style={{maxWidth:340,margin:'auto',borderRadius:24}}><div style={{padding:'40px 24px',textAlign:'center'}}><div style={{width:56,height:56,background:'#c4e538',borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}><I n="check" s={28} c="#0a0a0a"/></div><h3 style={{fontSize:18,fontWeight:600,marginBottom:8}}>Done</h3><p style={{color:'rgba(255,255,255,0.5)',fontSize:14,marginBottom:24}}>{msg}</p><button onClick={()=>setConf(false)} className="btn">Got it</button></div></div></div>}
+</>;
+
+// LOGIN
+const handleLogin=async(e)=>{
+  e.preventDefault();
+  // Demo mode - skip auth for testing
+  if(loginEmail==='demo@demo.com'&&loginPass==='demo123'){
+    setScr('onb');
+    setStep('welcome');
+    return;
+  }
+  setLoginLoading(true);
+  setLoginError('');
+  try{
+    const res=await supabase.auth.signIn(loginEmail,loginPass);
+    console.log('Login response:',res);
+    if(res.error||res.error_description){
+      throw new Error(res.error_description||res.msg||res.error||'Login failed');
+    }
+    if(res.access_token){
+      supabase.auth.setSession(res);
+      try{
+        const{data:dbProps}=await supabase.from('properties').select('*');
+        if(dbProps?.length)setProps(dbProps.map(p=>({...p,img:p.images?.[0]||'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800',flag:false})));
+      }catch(e){console.log('Could not load properties:',e);}
+      setScr('onb');
+      setStep('welcome');
+    }else{
+      throw new Error('No access token received');
+    }
+  }catch(err){
+    console.error('Login error:',err);
+    setLoginError(err.message||'Login failed');
+  }
+  setLoginLoading(false);
+};
+
+if(scr==='login')return<div className="fade" style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',padding:'40px 24px',maxWidth:400,margin:'0 auto'}}>
+<div style={{textAlign:'center',marginBottom:48}}>
+<div style={{width:64,height:64,background:'#c4e538',borderRadius:18,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px'}}><I n="building" s={32} c="#0a0a0a"/></div>
+<h1 className="serif" style={{fontSize:36,fontWeight:700,marginBottom:4}}>DEALFLOW</h1>
+<p style={{color:'rgba(255,255,255,0.4)',fontSize:14}}>by Overcrest Realty</p>
+</div>
+<form onSubmit={handleLogin}>
+{loginError&&<div style={{background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.3)',borderRadius:10,padding:12,marginBottom:16}}><p style={{color:'#ef4444',fontSize:13}}>{loginError}</p></div>}
+<div style={{marginBottom:16}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Email</label><input type="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} placeholder="you@example.com" className="inp" required/></div>
+<div style={{marginBottom:24}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Password</label><input type="password" value={loginPass} onChange={e=>setLoginPass(e.target.value)} placeholder="••••••••" className="inp" required/></div>
+<button type="submit" className="btn" disabled={loginLoading}>{loginLoading?'Signing in...':'Sign In'}</button>
+<p style={{textAlign:'center',marginTop:20,fontSize:14,color:'rgba(255,255,255,0.4)'}}>Don't have an account? <button type="button" onClick={()=>setScr('signup')} style={{background:'none',border:'none',color:'#c4e538',cursor:'pointer',fontWeight:600,fontSize:14}}>Sign up</button></p>
+<p style={{textAlign:'center',marginTop:12,fontSize:12,color:'rgba(255,255,255,0.3)'}}>Demo: demo@demo.com / demo123</p>
+</form>
+</div>;
+
+// SIGNUP
+const handleSignup=async(e)=>{
+  e.preventDefault();
+  if(signupPass!==signupPass2){setSignupError('Passwords do not match');return;}
+  setSignupLoading(true);
+  setSignupError('');
+  try{
+    const res=await supabase.auth.signUp(signupEmail,signupPass,signupName);
+    console.log('Signup response:',res);
+    if(res.error||res.error_description||res.msg){
+      throw new Error(res.error_description||res.msg||res.error||'Signup failed');
+    }
+    // Auto sign in after signup
+    const loginRes=await supabase.auth.signIn(signupEmail,signupPass);
+    if(loginRes.access_token){
+      supabase.auth.setSession(loginRes);
+      try{
+        const{data:dbProps}=await supabase.from('properties').select('*');
+        if(dbProps?.length)setProps(dbProps.map(p=>({...p,img:p.images?.[0]||'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800',flag:false})));
+      }catch(e){console.log('Could not load properties:',e);}
+      setScr('onb');
+      setStep('welcome');
+    }else{
+      // Signup successful but need email confirmation
+      setSignupError('Check your email to confirm your account, then sign in.');
+    }
+  }catch(err){
+    console.error('Signup error:',err);
+    setSignupError(err.message||'Signup failed');
+  }
+  setSignupLoading(false);
+};
+
+if(scr==='signup')return<div className="fade" style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',padding:'40px 24px',maxWidth:400,margin:'0 auto'}}>
+<div style={{textAlign:'center',marginBottom:40}}>
+<div style={{width:64,height:64,background:'#c4e538',borderRadius:18,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px'}}><I n="building" s={32} c="#0a0a0a"/></div>
+<h1 className="serif" style={{fontSize:32,fontWeight:700,marginBottom:4}}>Create Account</h1>
+<p style={{color:'rgba(255,255,255,0.4)',fontSize:14}}>Join Dealflow today</p>
+</div>
+<form onSubmit={handleSignup}>
+{signupError&&<div style={{background:signupError.includes('Check your email')?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)',border:`1px solid ${signupError.includes('Check your email')?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'}`,borderRadius:10,padding:12,marginBottom:16}}><p style={{color:signupError.includes('Check your email')?'#22c55e':'#ef4444',fontSize:13}}>{signupError}</p></div>}
+<div style={{marginBottom:16}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Full Name</label><input type="text" value={signupName} onChange={e=>setSignupName(e.target.value)} placeholder="John Smith" className="inp" required/></div>
+<div style={{marginBottom:16}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Email</label><input type="email" value={signupEmail} onChange={e=>setSignupEmail(e.target.value)} placeholder="you@example.com" className="inp" required/></div>
+<div style={{marginBottom:16}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Password</label><input type="password" value={signupPass} onChange={e=>setSignupPass(e.target.value)} placeholder="••••••••" className="inp" required/></div>
+<div style={{marginBottom:24}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Confirm Password</label><input type="password" value={signupPass2} onChange={e=>setSignupPass2(e.target.value)} placeholder="••••••••" className="inp" required/></div>
+<button type="submit" className="btn" disabled={signupLoading}>{signupLoading?'Creating account...':'Create Account'}</button>
+<p style={{textAlign:'center',marginTop:20,fontSize:14,color:'rgba(255,255,255,0.4)'}}>Already have an account? <button type="button" onClick={()=>setScr('login')} style={{background:'none',border:'none',color:'#c4e538',cursor:'pointer',fontWeight:600,fontSize:14}}>Sign in</button></p>
+</form>
+</div>;
+
+// ONBOARDING - Quick & Interactive
+if(scr==='onb'){
+
+// Step 1: Quick welcome with value prop
+if(step==='welcome')return<div className="fade" style={{minHeight:'100vh',display:'flex',flexDirection:'column',justifyContent:'center',padding:24,maxWidth:400,margin:'0 auto'}}>
+<div className="scaleIn" style={{textAlign:'center'}}>
+<div style={{width:72,height:72,background:'#c4e538',borderRadius:20,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}><I n="building" s={36} c="#0a0a0a"/></div>
+<h1 className="serif" style={{fontSize:32,fontWeight:600,marginBottom:8}}>Welcome to Dealflow</h1>
+<p style={{color:'rgba(255,255,255,0.5)',fontSize:15,marginBottom:40,lineHeight:1.5}}>Let's find your perfect investment in under 60 seconds</p>
+
+<div style={{display:'flex',flexDirection:'column',gap:12,marginBottom:40}}>
+<div className="slideUp" style={{display:'flex',alignItems:'center',gap:14,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:12,padding:14}}>
+<div style={{width:40,height:40,background:'rgba(196,229,56,0.15)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><I n="target" s={20} c="#c4e538"/></div>
+<p style={{fontSize:14,color:'rgba(255,255,255,0.7)',textAlign:'left'}}>Tell us what you're looking for</p>
+</div>
+<div className="slideUp2" style={{display:'flex',alignItems:'center',gap:14,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:12,padding:14}}>
+<div style={{width:40,height:40,background:'rgba(59,130,246,0.15)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><I n="sparkle" s={20} c="#3b82f6"/></div>
+<p style={{fontSize:14,color:'rgba(255,255,255,0.7)',textAlign:'left'}}>We'll match you with deals instantly</p>
+</div>
+</div>
+
+<button onClick={()=>setStep('q1')} className="btn">Let's go</button>
+</div>
+</div>;
+
+// Step 2: Quick question - What type?
+if(step==='q1')return<div className="fade" style={{minHeight:'100vh',display:'flex',flexDirection:'column',padding:24,maxWidth:440,margin:'0 auto'}}>
+<div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center'}}>
+<p className="slideUp" style={{color:'#c4e538',fontSize:13,fontWeight:500,marginBottom:8,textAlign:'center'}}>QUESTION 1 OF 3</p>
+<h2 className="serif slideUp" style={{fontSize:28,fontWeight:600,marginBottom:8,textAlign:'center'}}>What are you looking for?</h2>
+<p className="slideUp" style={{color:'rgba(255,255,255,0.4)',fontSize:14,marginBottom:32,textAlign:'center'}}>Select all that interest you</p>
+
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:32}}>
+{TYPES.map((t,i)=><div key={t.id} onClick={()=>togType(t.id)} className="slideUp" style={{background:box.types.includes(t.id)?'rgba(196,229,56,0.15)':'rgba(255,255,255,0.03)',border:box.types.includes(t.id)?'2px solid #c4e538':'1px solid rgba(255,255,255,0.1)',borderRadius:16,padding:20,cursor:'pointer',textAlign:'center',transition:'all 0.2s',animationDelay:`${i*0.05}s`}}>
+<div style={{width:48,height:48,background:box.types.includes(t.id)?'#c4e538':'rgba(255,255,255,0.06)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',transition:'all 0.2s'}}><I n={t.ic} s={24} c={box.types.includes(t.id)?'#0a0a0a':'#fff'}/></div>
+<p style={{fontSize:15,fontWeight:500}}>{t.name}</p>
+</div>)}
+</div>
+
+<button onClick={()=>setStep('q2')} className="btn" disabled={box.types.length===0}>{box.types.length===0?'Select at least one':'Continue'}</button>
+</div>
+</div>;
+
+// Step 3: Quick question - Budget?
+if(step==='q2')return<div className="fade" style={{minHeight:'100vh',display:'flex',flexDirection:'column',padding:24,maxWidth:440,margin:'0 auto'}}>
+<div style={{marginBottom:20}}><Back fn={()=>setStep('q1')}/></div>
+<div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center'}}>
+<p className="slideUp" style={{color:'#c4e538',fontSize:13,fontWeight:500,marginBottom:8,textAlign:'center'}}>QUESTION 2 OF 3</p>
+<h2 className="serif slideUp" style={{fontSize:28,fontWeight:600,marginBottom:8,textAlign:'center'}}>What's your budget?</h2>
+<p className="slideUp" style={{color:'rgba(255,255,255,0.4)',fontSize:14,marginBottom:32,textAlign:'center'}}>We'll show deals in your range</p>
+
+<div className="slideUp2" style={{display:'flex',flex:'column',gap:12,marginBottom:32}}>
+{[{l:'Under $500K',min:0,max:500000},{l:'$500K - $2M',min:500000,max:2000000},{l:'$2M - $5M',min:2000000,max:5000000},{l:'$5M - $10M',min:5000000,max:10000000},{l:'$10M+',min:10000000,max:''}].map((r,i)=><div key={i} onClick={()=>setBox({...box,min:r.min,max:r.max})} style={{background:(box.min===r.min&&box.max===r.max)?'rgba(196,229,56,0.15)':'rgba(255,255,255,0.03)',border:(box.min===r.min&&box.max===r.max)?'2px solid #c4e538':'1px solid rgba(255,255,255,0.1)',borderRadius:12,padding:16,cursor:'pointer',textAlign:'center',transition:'all 0.2s',marginBottom:10}}>
+<p style={{fontSize:15,fontWeight:500}}>{r.l}</p>
+</div>)}
+</div>
+
+<button onClick={()=>setStep('q3')} className="btn" disabled={!box.min&&box.min!==0}>Continue</button>
+</div>
+</div>;
+
+// Step 4: Quick question - Where?
+if(step==='q3')return<div className="fade" style={{minHeight:'100vh',display:'flex',flexDirection:'column',padding:24,maxWidth:440,margin:'0 auto'}}>
+<div style={{marginBottom:20}}><Back fn={()=>setStep('q2')}/></div>
+<div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center'}}>
+<p className="slideUp" style={{color:'#c4e538',fontSize:13,fontWeight:500,marginBottom:8,textAlign:'center'}}>QUESTION 3 OF 3</p>
+<h2 className="serif slideUp" style={{fontSize:28,fontWeight:600,marginBottom:8,textAlign:'center'}}>Where are you looking?</h2>
+<p className="slideUp" style={{color:'rgba(255,255,255,0.4)',fontSize:14,marginBottom:32,textAlign:'center'}}>Select your target markets</p>
+
+<div className="slideUp2" style={{display:'flex',flexWrap:'wrap',gap:10,justifyContent:'center',marginBottom:32}}>
+{STS.map(s=><div key={s} onClick={()=>togSt(s)} style={{background:box.sts.includes(s)?'#c4e538':'rgba(255,255,255,0.06)',color:box.sts.includes(s)?'#0a0a0a':'rgba(255,255,255,0.7)',borderRadius:10,padding:'12px 20px',cursor:'pointer',fontSize:14,fontWeight:500,transition:'all 0.2s'}}>{s}</div>)}
+</div>
+
+<button onClick={()=>{setBox({...box,on:true});setStep('ready')}} className="btn" disabled={box.sts.length===0}>{box.sts.length===0?'Select at least one':'Find my deals'}</button>
+</div>
+</div>;
+
+// Step 5: Show them their matches!
+if(step==='ready'){
+const matches=DATA.filter(p=>match(p,box));
+return<div className="fade" style={{minHeight:'100vh',display:'flex',flexDirection:'column',padding:24,maxWidth:440,margin:'0 auto'}}>
+<div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center',textAlign:'center'}}>
+<div className="scaleIn" style={{width:72,height:72,background:'#22c55e',borderRadius:20,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 24px'}}><I n="check" s={36} c="#fff"/></div>
+<h2 className="serif slideUp" style={{fontSize:28,fontWeight:600,marginBottom:8}}>Perfect!</h2>
+
+{matches.length>0?<>
+<p className="slideUp2" style={{color:'rgba(255,255,255,0.5)',fontSize:15,marginBottom:32}}>We found <span style={{color:'#c4e538',fontWeight:600}}>{matches.length} deals</span> that match your criteria</p>
+
+<div className="slideUp3" style={{display:'flex',flexDirection:'column',gap:10,marginBottom:32}}>
+{matches.slice(0,2).map(p=><div key={p.id} style={{display:'flex',alignItems:'center',gap:12,background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:12,padding:12}}>
+<img src={p.img} style={{width:56,height:56,borderRadius:10,objectFit:'cover'}}/>
+<div style={{flex:1,textAlign:'left'}}><p style={{fontWeight:500,fontSize:14,marginBottom:2}}>{p.name}</p><p style={{color:'#c4e538',fontWeight:600,fontSize:14}}>{fmt(p.price)}</p></div>
+<span className="badge" style={{background:'#3b82f6',color:'#fff'}}>Match</span>
+</div>)}
+{matches.length>2&&<p style={{fontSize:13,color:'rgba(255,255,255,0.4)'}}>+{matches.length-2} more matches</p>}
+</div>
+</>:<>
+<p className="slideUp2" style={{color:'rgba(255,255,255,0.5)',fontSize:15,marginBottom:32}}>We'll notify you when matching deals come in</p>
+</>}
+
+<button onClick={()=>{setStep('tour');setTourSlide(0)}} className="btn">Quick tour of the app</button>
+<button onClick={()=>setScr('market')} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',fontSize:14,cursor:'pointer',marginTop:16}}>Skip, I'll explore myself</button>
+</div>
+</div>;
+}
+
+// Step 6: Feature Tour Slides
+if(step==='tour'){
+const s=TOUR[tourSlide];
+const isLast=tourSlide===TOUR.length-1;
+return<div key={tourSlide} className="fade" style={{minHeight:'100vh',display:'flex',flexDirection:'column',padding:24}}>
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
+<p style={{fontSize:13,color:'rgba(255,255,255,0.3)'}}>{tourSlide+1} / {TOUR.length}</p>
+<button onClick={()=>setScr('market')} style={{background:'none',border:'none',color:'rgba(255,255,255,0.4)',fontSize:14,cursor:'pointer'}}>Skip</button>
+</div>
+<div style={{flex:1,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',textAlign:'center',maxWidth:340,margin:'0 auto'}}>
+<div className="float slideUp" style={{width:88,height:88,background:`${s.accent}18`,border:`2px solid ${s.accent}40`,borderRadius:28,display:'flex',alignItems:'center',justifyContent:'center',marginBottom:28}}><I n={s.ic} s={40} c={s.accent}/></div>
+<h2 className="serif slideUp" style={{fontSize:30,fontWeight:600,marginBottom:10,lineHeight:1.2}}>{s.t}</h2>
+<p className="slideUp2" style={{color:s.accent,fontSize:16,fontWeight:500,marginBottom:16}}>{s.s}</p>
+<p className="slideUp3" style={{color:'rgba(255,255,255,0.5)',fontSize:15,lineHeight:1.7}}>{s.d}</p>
+</div>
+<div style={{display:'flex',justifyContent:'center',gap:8,marginBottom:24}}>
+{TOUR.map((_,i)=><div key={i} onClick={()=>setTourSlide(i)} style={{width:i===tourSlide?28:10,height:10,borderRadius:5,background:i===tourSlide?s.accent:'rgba(255,255,255,0.15)',cursor:'pointer',transition:'all 0.3s'}}/>)}
+</div>
+<button onClick={()=>isLast?setScr('market'):setTourSlide(tourSlide+1)} className="btn" style={{background:s.accent,color:s.accent==='#f59e0b'||s.accent==='#c4e538'?'#0a0a0a':'#fff'}}>{isLast?'Start exploring':'Next'}</button>
+</div>;
+}
+
+// Property form steps (keep existing)
+if(step==='pType')return<div className="fade" style={{minHeight:'100vh',padding:24,maxWidth:440,margin:'0 auto'}}>
+<div style={{marginBottom:20}}><Back fn={()=>setScr('dash')}/></div>
+<h2 className="serif slideUp" style={{fontSize:26,textAlign:'center',marginBottom:8}}>Property Type</h2>
+<p className="slideUp" style={{color:'rgba(255,255,255,0.4)',fontSize:14,textAlign:'center',marginBottom:28}}>What type are you adding?</p>
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+{TYPES.map((t,i)=><div key={t.id} onClick={()=>{setPType(t.id);setStep('pForm')}} className="card slideUp" style={{textAlign:'center',padding:24,cursor:'pointer',animationDelay:`${i*0.1}s`}}>
+<div style={{width:48,height:48,background:'rgba(196,229,56,0.1)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}><I n={t.ic} s={24} c="#c4e538"/></div>
+<p style={{fontSize:14,fontWeight:500}}>{t.name}</p>
+</div>)}
+</div>
+{port.length>0&&<button onClick={()=>setScr('market')} className="btn" style={{marginTop:24}}>Done ({port.length} added)</button>}
+</div>;
+
+if(step==='pForm'){
+const cm=pType==='commercial'||pType==='multifamily';
+const fl=pType==='flip';
+const la=pType==='land';
+const m=calc({...pData,type:pType});
+return<div className="fade" style={{minHeight:'100vh',padding:'24px 24px 100px',maxWidth:440,margin:'0 auto'}}>
+<div style={{marginBottom:20}}><Back fn={()=>{setPType(null);setStep('pType')}}/></div>
+<h2 className="serif" style={{fontSize:24,textAlign:'center',marginBottom:24}}>{TYPES.find(t=>t.id===pType)?.name}</h2>
+<div style={{display:'flex',flexDirection:'column',gap:16}}>
+<div><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Address</label><input type="text" value={pData.name||''} onChange={e=>setPData({...pData,name:e.target.value})} placeholder="123 Main St, City, ST" className="inp"/></div>
+<div><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Purchase Price</label><input type="number" value={pData.price||''} onChange={e=>setPData({...pData,price:Number(e.target.value)})} placeholder="2500000" className="inp"/></div>
+{cm&&<><div style={{display:'flex',gap:12}}><div style={{flex:1}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Monthly Rent</label><input type="number" value={pData.rent||''} onChange={e=>setPData({...pData,rent:Number(e.target.value)})} className="inp"/></div><div style={{flex:1}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Annual Expenses</label><input type="number" value={pData.exp||''} onChange={e=>setPData({...pData,exp:Number(e.target.value)})} className="inp"/></div></div></>}
+{fl&&<><div style={{display:'flex',gap:12}}><div style={{flex:1}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Rehab Cost</label><input type="number" value={pData.rehab||''} onChange={e=>setPData({...pData,rehab:Number(e.target.value)})} className="inp"/></div><div style={{flex:1}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>ARV</label><input type="number" value={pData.arv||''} onChange={e=>setPData({...pData,arv:Number(e.target.value)})} className="inp"/></div></div></>}
+{la&&<><div style={{display:'flex',gap:12}}><div style={{flex:1}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Dev Costs</label><input type="number" value={pData.dev||''} onChange={e=>setPData({...pData,dev:Number(e.target.value)})} className="inp"/></div><div style={{flex:1}}><label style={{display:'block',fontSize:13,fontWeight:500,marginBottom:8,color:'rgba(255,255,255,0.6)'}}>Projected Value</label><input type="number" value={pData.proj||''} onChange={e=>setPData({...pData,proj:Number(e.target.value)})} className="inp"/></div></div></>}
+{pData.price>0&&<div className="card slideUp" style={{borderColor:'rgba(196,229,56,0.2)'}}>
+<p style={{fontSize:12,fontWeight:500,color:'#c4e538',marginBottom:12}}>Calculated Metrics</p>
+<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+{cm&&<><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>NOI</p><p style={{fontSize:15,fontWeight:600}}>{fmt(m.noi||0)}</p></div><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Cap Rate</p><p style={{fontSize:15,fontWeight:600,color:'#c4e538'}}>{m.cap}%</p></div><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>CoC</p><p style={{fontSize:15,fontWeight:600,color:'#c4e538'}}>{m.coc}%</p></div></>}
+{fl&&<><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Total In</p><p style={{fontSize:15,fontWeight:600}}>{fmt(m.tot||0)}</p></div><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Profit</p><p style={{fontSize:15,fontWeight:600,color:'#c4e538'}}>{fmt(m.profit||0)}</p></div><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>ROI</p><p style={{fontSize:15,fontWeight:600,color:'#c4e538'}}>{m.roi}%</p></div></>}
+{la&&<><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Total</p><p style={{fontSize:15,fontWeight:600}}>{fmt(m.tot||0)}</p></div><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Profit</p><p style={{fontSize:15,fontWeight:600,color:'#c4e538'}}>{fmt(m.profit||0)}</p></div><div><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>ROI</p><p style={{fontSize:15,fontWeight:600,color:'#c4e538'}}>{m.roi}%</p></div></>}
+</div></div>}
+<button onClick={add} className="btn" disabled={!pData.name||!pData.price}>Add Property</button>
+</div></div>;
+}
+
+if(step==='sum')return<div className="fade" style={{minHeight:'100vh',padding:24,maxWidth:400,margin:'0 auto',display:'flex',flexDirection:'column',justifyContent:'center'}}>
+<div className="scaleIn" style={{textAlign:'center'}}>
+<div style={{width:64,height:64,background:'#22c55e',borderRadius:18,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px'}}><I n="check" s={32} c="#fff"/></div>
+<h2 className="serif" style={{fontSize:28,fontWeight:600,marginBottom:8}}>Added</h2>
+<p style={{color:'rgba(255,255,255,0.4)',marginBottom:32}}>{port.length} {port.length===1?'property':'properties'} in portfolio</p>
+<button onClick={()=>setStep('pType')} className="btn2" style={{marginBottom:12}}>Add another</button>
+<button onClick={()=>setScr('dash')} className="btn">Done</button>
+</div>
+</div>;
+}
+
+// DASHBOARD
+if(scr==='dash')return<div className="fade" style={{minHeight:'100vh',paddingBottom:100,background:'#0a0a0a'}}>
+<div style={{padding:'20px 20px 16px',position:'sticky',top:0,background:'rgba(10,10,10,0.95)',backdropFilter:'blur(20px)',zIndex:50,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+<div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+<h1 className="serif" style={{fontSize:22,fontWeight:600}}>Portfolio</h1>
+<div style={{display:'flex',gap:8}}>
+<button onClick={()=>setShowBox(true)} style={{background:box.on?'rgba(16,185,129,0.15)':'rgba(255,255,255,0.05)',border:box.on?'1px solid rgba(16,185,129,0.3)':'1px solid rgba(255,255,255,0.1)',borderRadius:10,padding:10,cursor:'pointer'}}><I n="target" s={18} c={box.on?'#10b981':'rgba(255,255,255,0.5)'}/></button>
+<button onClick={()=>setScr('login')} style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:10,padding:10,cursor:'pointer'}}><I n="logout" s={18} c="rgba(255,255,255,0.5)"/></button>
+</div>
+</div>
+</div>
+<div style={{padding:20}}>
+{port.length===0?<div style={{textAlign:'center',padding:'40px 20px'}}>
+<div style={{width:64,height:64,background:'rgba(255,255,255,0.05)',borderRadius:18,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}><I n="home" s={28} c="rgba(255,255,255,0.2)"/></div>
+<h3 style={{fontSize:18,fontWeight:600,marginBottom:8}}>Your portfolio is empty</h3>
+<p style={{color:'rgba(255,255,255,0.4)',fontSize:14,marginBottom:24,maxWidth:280,margin:'0 auto 24px'}}>Track all your investments in one place with auto-calculated metrics</p>
+<div style={{display:'flex',flexDirection:'column',gap:10,maxWidth:280,margin:'0 auto'}}>
+<button onClick={()=>{setScr('onb');setStep('pType')}} className="btn">Add manually</button>
+<button onClick={()=>setAiMode(true)} className="btn2" style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8}}><I n="brain" s={16} c="#8b5cf6"/>Add with AI</button>
+</div>
+<p style={{fontSize:12,color:'rgba(255,255,255,0.3)',marginTop:20}}>Tip: Use AI to paste any listing and auto-extract all the data</p>
+</div>:<div style={{display:'flex',flexDirection:'column',gap:12}}>
+{port.map(p=><div key={p.id} className="card">
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+<div><p style={{fontWeight:600,fontSize:15,marginBottom:4}}>{p.name}</p><span className="badge" style={{background:'rgba(196,229,56,0.15)',color:'#c4e538'}}>{p.type}</span></div>
+<p style={{fontSize:18,fontWeight:600,color:'#c4e538'}}>{fmt(p.price)}</p>
+</div>
+<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+{(p.type==='commercial'||p.type==='multifamily')&&<><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>NOI</p><p style={{fontSize:13,fontWeight:600}}>{fmt(p.noi||0)}</p></div><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Cap</p><p style={{fontSize:13,fontWeight:600,color:'#c4e538'}}>{p.cap}%</p></div><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>CoC</p><p style={{fontSize:13,fontWeight:600,color:'#c4e538'}}>{p.coc}%</p></div></>}
+{p.type==='flip'&&<><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Total</p><p style={{fontSize:13,fontWeight:600}}>{fmt(p.tot||0)}</p></div><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Profit</p><p style={{fontSize:13,fontWeight:600,color:'#c4e538'}}>{fmt(p.profit||0)}</p></div><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>ROI</p><p style={{fontSize:13,fontWeight:600,color:'#c4e538'}}>{p.roi}%</p></div></>}
+{p.type==='land'&&<><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Total</p><p style={{fontSize:13,fontWeight:600}}>{fmt(p.tot||0)}</p></div><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Profit</p><p style={{fontSize:13,fontWeight:600,color:'#c4e538'}}>{fmt(p.profit||0)}</p></div><div style={{background:'rgba(255,255,255,0.03)',borderRadius:8,padding:10,textAlign:'center'}}><p style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>ROI</p><p style={{fontSize:13,fontWeight:600,color:'#c4e538'}}>{p.roi}%</p></div></>}
+</div>
+</div>)}
+<button onClick={()=>{setScr('onb');setStep('pType')}} className="btn2" style={{marginTop:8}}>Add property</button>
+</div>}
+</div>
+<Nav act="dash"/>
+<Modals/>
+</div>;
+
+// MARKETPLACE
+if(scr==='market')return<div className="fade" style={{minHeight:'100vh',paddingBottom:100,background:'#0a0a0a'}}>
+<div style={{padding:'20px 20px 16px',position:'sticky',top:0,background:'rgba(10,10,10,0.95)',backdropFilter:'blur(20px)',zIndex:50,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+<h1 className="serif" style={{fontSize:22,fontWeight:600}}>Deals</h1>
+<button onClick={()=>setShowBox(true)} style={{background:box.on?'rgba(16,185,129,0.15)':'rgba(255,255,255,0.05)',border:box.on?'1px solid rgba(16,185,129,0.3)':'1px solid rgba(255,255,255,0.1)',borderRadius:10,padding:'8px 12px',cursor:'pointer',display:'flex',alignItems:'center',gap:6,fontSize:12,fontWeight:500,color:box.on?'#10b981':'rgba(255,255,255,0.5)'}}><I n="target" s={16} c={box.on?'#10b981':'rgba(255,255,255,0.5)'}/>Buy Box</button>
+</div>
+<div style={{display:'flex',gap:8,overflowX:'auto',paddingBottom:4}}>
+{[{id:'all',l:'All'},{id:'match',l:'Matches',sh:box.on},{id:'commercial',l:'Commercial'},{id:'multifamily',l:'Multi'},{id:'flip',l:'Flips'},{id:'land',l:'Land'},{id:'hot',l:'Hot'}].filter(x=>x.sh!==false).map(x=>
+<button key={x.id} onClick={()=>setFilt(x.id)} style={{padding:'8px 16px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:500,whiteSpace:'nowrap',background:filt===x.id?'#c4e538':'rgba(255,255,255,0.06)',color:filt===x.id?'#0a0a0a':'rgba(255,255,255,0.6)'}}>{x.l}</button>
+)}
+</div>
+</div>
+<div style={{padding:20}}>
+{box.on&&mCnt>0&&filt!=='match'&&<div onClick={()=>setFilt('match')} className="card" style={{marginBottom:16,cursor:'pointer',borderColor:'rgba(59,130,246,0.3)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+<div style={{display:'flex',alignItems:'center',gap:10}}><I n="target" s={18} c="#3b82f6"/><span style={{fontSize:14,fontWeight:500}}>{mCnt} deals match your criteria</span></div>
+<I n="arrow" s={16} c="#3b82f6"/>
+</div>}
+<div style={{display:'flex',flexDirection:'column',gap:16}}>
+{fltd.map(p=><div key={p.id} onClick={()=>setSel(p)} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:16,overflow:'hidden',cursor:'pointer'}}>
+<div style={{position:'relative',height:180}}>
+<img src={p.img} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+<button onClick={e=>{e.stopPropagation();toggle(p.id)}} style={{position:'absolute',top:12,right:12,width:40,height:40,borderRadius:10,border:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',background:p.flag?'#c4e538':'rgba(0,0,0,0.6)',backdropFilter:'blur(10px)'}}><I n="flag" s={18} c={p.flag?'#0a0a0a':'#fff'}/></button>
+<div style={{position:'absolute',top:12,left:12,display:'flex',gap:6}}>
+{match(p,box)&&<span className="badge" style={{background:'#3b82f6',color:'#fff'}}>Match</span>}
+{p.feat&&!match(p,box)&&<span className="badge" style={{background:'rgba(196,229,56,0.9)',color:'#0a0a0a'}}>Featured</span>}
+{p.hot&&<span className="badge pulse" style={{background:'#ef4444',color:'#fff'}}>Hot</span>}
+</div>
+</div>
+<div style={{padding:16}}>
+<h3 style={{fontSize:16,fontWeight:600,marginBottom:4}}>{p.name}</h3>
+<p style={{fontSize:13,color:'rgba(255,255,255,0.4)',marginBottom:12,display:'flex',alignItems:'center',gap:4}}><I n="pin" s={12} c="rgba(255,255,255,0.4)"/>{p.city}, {p.state}</p>
+{p.hot&&<div style={{background:'rgba(239,68,68,0.1)',borderRadius:8,padding:10,marginBottom:12}}><p style={{fontSize:13,color:'#ef4444',fontWeight:500}}>{p.reason}</p></div>}
+<div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+<div><p style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Price</p><p style={{fontSize:20,fontWeight:600,color:'#c4e538'}}>{fmt(p.price)}</p></div>
+{p.cap&&<div style={{textAlign:'right'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>Cap</p><p style={{fontSize:16,fontWeight:600}}>{p.cap}%</p></div>}
+{p.coc&&<div style={{textAlign:'right'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>CoC</p><p style={{fontSize:16,fontWeight:600}}>{p.coc}%</p></div>}
+{p.roi&&<div style={{textAlign:'right'}}><p style={{fontSize:11,color:'rgba(255,255,255,0.4)'}}>ROI</p><p style={{fontSize:16,fontWeight:600}}>{p.roi}%</p></div>}
+</div>
+</div>
+</div>)}
+</div>
+</div>
+<Nav act="market"/>
+<Modals/>
+</div>;
+
+return null;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
